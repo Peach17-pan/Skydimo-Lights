@@ -1,0 +1,3 @@
+F:/1/GitHub/Skydimo-Lights/build/CMakeFiles/app_state_monitor.dir
+F:/1/GitHub/Skydimo-Lights/build/CMakeFiles/ALL_BUILD.dir
+F:/1/GitHub/Skydimo-Lights/build/CMakeFiles/ZERO_CHECK.dir
