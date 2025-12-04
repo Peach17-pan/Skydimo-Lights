@@ -317,6 +317,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="F:\1\GitHub\Skydimo-Lights\window_monitor.cpp" />
     <ClCompile Include="F:\1\GitHub\Skydimo-Lights\app_classifier.cpp" />
     <ClCompile Include="F:\1\GitHub\Skydimo-Lights\rule_engine.cpp" />
+    <ClCompile Include="F:\1\GitHub\Skydimo-Lights\audio_monitor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="F:\1\GitHub\Skydimo-Lights\build\ZERO_CHECK.vcxproj">

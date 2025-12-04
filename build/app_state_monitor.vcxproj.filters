@@ -13,6 +13,9 @@
     <ClCompile Include="F:\1\GitHub\Skydimo-Lights\rule_engine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="F:\1\GitHub\Skydimo-Lights\audio_monitor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="F:\1\GitHub\Skydimo-Lights\CMakeLists.txt" />

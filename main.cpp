@@ -1,6 +1,7 @@
 #include "window_monitor.h"
 #include "app_classifier.h"
 #include "rule_engine.h"
+#include "audio_monitor.h"
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -82,6 +83,22 @@ std::string GetWeekday() {
     int weekday_index = tm_buf.tm_wday;
     
     return std::string(weekdays[weekday_index]);
+}
+
+/**
+ * 判断是否是工作日（周一～周五）
+ * @return true表示工作日，false表示周末
+ */
+bool IsWeekday() {
+    auto now = std::chrono::system_clock::now();
+    auto time_t = std::chrono::system_clock::to_time_t(now);
+    
+    std::tm tm_buf;
+    localtime_s(&tm_buf, &time_t);
+    
+    // tm_wday: 0=周日, 1=周一, ..., 6=周六
+    // 工作日：1-5（周一到周五）
+    return tm_buf.tm_wday >= 1 && tm_buf.tm_wday <= 5;
 }
 
 /**
@@ -283,6 +300,43 @@ void InitializeRules(RuleEngine& rule_engine) {
     rule.conditions.push_back(cpu_condition);
     rule_engine.AddRule(rule);
     
+    // 规则9: 有音频活动且非游戏场景，使用音乐律动模式（优先级2.5）
+    // 实现方式：由于游戏、视频、音乐应用会被更高优先级规则覆盖，
+    // 这个规则主要针对浏览器、未知应用等非游戏场景
+    // 优先级设置为2，高于工作日规则（1）和周末规则（0），确保音频规则优先
+    rule = Rule();
+    rule.priority = 2;
+    rule.target_mode = LightMode::MUSIC;
+    Condition audio_condition;
+    audio_condition.type = ConditionType::AUDIO_ACTIVITY;
+    audio_condition.audio_activity = true;  // 有音频
+    rule.conditions.push_back(audio_condition);
+    // 注意：由于游戏规则（优先级8）更高，游戏场景会被覆盖
+    // 视频规则（优先级7）和音乐规则（优先级6）也会覆盖
+    // 所以这个规则主要对浏览器、未知应用等非游戏场景生效
+    rule_engine.AddRule(rule);
+    
+    // 规则10: 工作日 09:00-18:00，使用办公/写代码模式（优先级1）
+    rule = Rule();
+    rule.priority = 1;
+    rule.target_mode = LightMode::WORK_CODING;
+    Condition weekday_time_condition;
+    weekday_time_condition.type = ConditionType::TIME_RANGE;
+    weekday_time_condition.time_range = TimeRange(9, 0, 18, 0, WeekdayType::WEEKDAY);  // 工作日 09:00-18:00
+    rule.conditions.push_back(weekday_time_condition);
+    rule_engine.AddRule(rule);
+    
+    // 规则11: 周末 09:00-18:00，使用音乐律动模式（优先级0，作为娱乐模式）
+    // 注意：这个优先级较低，会被其他规则（如游戏、视频等）覆盖
+    rule = Rule();
+    rule.priority = 0;
+    rule.target_mode = LightMode::MUSIC;
+    Condition weekend_time_condition;
+    weekend_time_condition.type = ConditionType::TIME_RANGE;
+    weekend_time_condition.time_range = TimeRange(9, 0, 18, 0, WeekdayType::WEEKEND);  // 周末 09:00-18:00
+    rule.conditions.push_back(weekend_time_condition);
+    rule_engine.AddRule(rule);
+    
     // 注意：如果没有规则匹配，将返回默认模式（DEFAULT）
 }
 
@@ -312,6 +366,7 @@ void PrintState(const WindowInfo& window_info, AppCategory category, CpuMonitor&
         std::cout << "  Idle时间: 无法获取" << std::endl;
     }
     std::cout << std::defaultfloat;
+    std::cout << "  音频活动: " << (system_state.has_audio_activity ? "有" : "无") << std::endl;
     std::cout << "  当前判定的灯光模式: " << RuleEngine::GetLightModeName(light_mode) << std::endl;
     
     // 调试信息（可选）
@@ -348,11 +403,19 @@ int main(int argc, char* argv[]) {
     // 解析命令行参数
     int interval_ms = 3000;  // 默认3秒
     bool debug_mode = false;  // 调试模式
+    std::string config_file = "app_category_config.txt";  // 默认配置文件路径
     
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
         if (arg == "--debug" || arg == "-d") {
             debug_mode = true;
+        } else if (arg == "--config" || arg == "-c") {
+            // 指定配置文件路径
+            if (i + 1 < argc) {
+                config_file = argv[++i];
+            } else {
+                std::cerr << "错误: --config 参数需要指定文件路径" << std::endl;
+            }
         } else {
             try {
                 interval_ms = std::stoi(arg);
@@ -373,8 +436,24 @@ int main(int argc, char* argv[]) {
     
     WindowMonitor window_monitor;
     AppClassifier app_classifier;
+    
+    // 尝试从配置文件加载应用分类映射
+    // 如果配置文件不存在，会使用默认映射
+    if (!app_classifier.LoadConfigFile(config_file)) {
+        std::cout << "提示: 未找到配置文件 \"" << config_file 
+                  << "\"，使用默认应用分类映射" << std::endl;
+    } else {
+        std::cout << "已从配置文件加载应用分类: " << config_file << std::endl;
+    }
+    
     CpuMonitor cpu_monitor;
+    AudioMonitor audio_monitor;
     RuleEngine rule_engine;
+    
+    // 初始化音频监控
+    if (!audio_monitor.Initialize()) {
+        std::cerr << "警告: 音频监控初始化失败，音频活动检测可能不可用" << std::endl;
+    }
     
     // 初始化规则引擎，添加示例规则
     InitializeRules(rule_engine);
@@ -394,12 +473,16 @@ int main(int argc, char* argv[]) {
         
         double cpu_usage = cpu_monitor.GetCpuUsage();
         double idle_minutes = GetUserIdleMinutes();
+        bool has_audio = audio_monitor.GetAudioActivity();
+        bool is_weekday = IsWeekday();
         
         SystemState system_state;
         system_state.current_hour = tm_buf.tm_hour;
         system_state.current_minute = tm_buf.tm_min;
         system_state.cpu_usage = cpu_usage;
         system_state.idle_minutes = idle_minutes >= 0.0 ? idle_minutes : 0.0;
+        system_state.has_audio_activity = has_audio;
+        system_state.is_weekday = is_weekday;
         
         // 决定当前灯光模式（对外接口：定期调用获取当前模式）
         LightMode current_light_mode = rule_engine.DecideLightMode(system_state);
@@ -439,6 +522,7 @@ int main(int argc, char* argv[]) {
                 std::cout << "  用户空闲时间: 无法获取" << std::endl;
             }
             std::cout << std::defaultfloat;
+            std::cout << "  音频活动: " << (system_state.has_audio_activity ? "有" : "无") << std::endl;
             std::cout << "  应用类别: 未知" << std::endl;
             std::cout << "  灯光模式: " << RuleEngine::GetLightModeName(current_light_mode) << std::endl;
             std::cout << std::string(60, '-') << std::endl;

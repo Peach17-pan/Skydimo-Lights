@@ -1,0 +1,67 @@
+# 应用分类配置文件
+# 格式：进程名=类别名
+# 类别名：GAME, VIDEO, MUSIC, DOCUMENT, BROWSER, DEVELOPMENT, CREATIVE
+# 进程名不区分大小写，会自动转换为小写
+# 以 # 开头的行是注释，会被忽略
+# 空行会被忽略
+
+# 游戏平台
+steam.exe=GAME
+epicgameslauncher.exe=GAME
+origin.exe=GAME
+battle.net.exe=GAME
+riotclientservices.exe=GAME
+
+# 视频播放器
+vlc.exe=VIDEO
+potplayermini64.exe=VIDEO
+potplayermini.exe=VIDEO
+mpc-hc.exe=VIDEO
+kodi.exe=VIDEO
+
+# 音乐播放器
+spotify.exe=MUSIC
+musicbee.exe=MUSIC
+foobar2000.exe=MUSIC
+itunes.exe=MUSIC
+
+# 办公软件
+winword.exe=DOCUMENT
+excel.exe=DOCUMENT
+powerpnt.exe=DOCUMENT
+outlook.exe=DOCUMENT
+onenote.exe=DOCUMENT
+wps.exe=DOCUMENT
+notepad++.exe=DOCUMENT
+notepad.exe=DOCUMENT
+
+# 浏览器
+chrome.exe=BROWSER
+firefox.exe=BROWSER
+msedge.exe=BROWSER
+opera.exe=BROWSER
+brave.exe=BROWSER
+vivaldi.exe=BROWSER
+iexplore.exe=BROWSER
+
+# 开发工具
+devenv.exe=DEVELOPMENT
+code.exe=DEVELOPMENT
+pycharm64.exe=DEVELOPMENT
+pycharm.exe=DEVELOPMENT
+idea64.exe=DEVELOPMENT
+idea.exe=DEVELOPMENT
+eclipse.exe=DEVELOPMENT
+sublime_text.exe=DEVELOPMENT
+cursor.exe=DEVELOPMENT
+
+# 创作工具
+photoshop.exe=CREATIVE
+illustrator.exe=CREATIVE
+premiere pro.exe=CREATIVE
+afterfx.exe=CREATIVE
+davinci resolve.exe=CREATIVE
+blender.exe=CREATIVE
+
+# 测试配置
+# notepad.exe=GAME

@@ -27,7 +27,17 @@ enum class ConditionType {
     APP_CATEGORY,       // 应用类别
     TIME_RANGE,         // 时间段
     CPU_THRESHOLD,      // CPU使用率阈值
-    IDLE_THRESHOLD      // Idle时间阈值
+    IDLE_THRESHOLD,     // Idle时间阈值
+    AUDIO_ACTIVITY      // 音频活动（有/无）
+};
+
+/**
+ * 工作日类型枚举
+ */
+enum class WeekdayType {
+    ANY,        // 任意（工作日和周末都匹配）
+    WEEKDAY,    // 仅工作日（周一～周五）
+    WEEKEND     // 仅周末（周六、周日）
 };
 
 /**
@@ -38,9 +48,10 @@ struct TimeRange {
     int start_minute;   // 开始分钟 (0-59)
     int end_hour;       // 结束小时 (0-23)
     int end_minute;     // 结束分钟 (0-59)
+    WeekdayType weekday_type;  // 工作日类型限制（默认ANY，匹配所有）
     
-    TimeRange(int sh = 0, int sm = 0, int eh = 23, int em = 59)
-        : start_hour(sh), start_minute(sm), end_hour(eh), end_minute(em) {}
+    TimeRange(int sh = 0, int sm = 0, int eh = 23, int em = 59, WeekdayType wt = WeekdayType::ANY)
+        : start_hour(sh), start_minute(sm), end_hour(eh), end_minute(em), weekday_type(wt) {}
 };
 
 /**
@@ -56,6 +67,7 @@ struct Condition {
     bool cpu_greater_than;                         // CPU_THRESHOLD (是否大于阈值)
     std::optional<double> idle_threshold;          // IDLE_THRESHOLD (阈值，分钟)
     bool idle_greater_than;                        // IDLE_THRESHOLD (是否大于等于阈值)
+    std::optional<bool> audio_activity;            // AUDIO_ACTIVITY (true=有音频, false=无音频)
     
     Condition() : cpu_greater_than(false), idle_greater_than(false) {}
 };
@@ -80,6 +92,8 @@ struct SystemState {
     double idle_minutes;                  // 用户空闲时间（分钟）
     int current_hour;                      // 当前小时 (0-23)
     int current_minute;                   // 当前分钟 (0-59)
+    bool has_audio_activity;               // 是否有音频活动
+    bool is_weekday;                       // 是否是工作日（true=工作日，false=周末）
 };
 
 /**
@@ -138,8 +152,9 @@ private:
      * @param time_range 时间段
      * @param current_hour 当前小时
      * @param current_minute 当前分钟
-     * @return 是否在时间段内
+     * @param is_weekday 是否是工作日
+     * @return 是否在时间段内且符合工作日类型要求
      */
-    bool CheckTimeRange(const TimeRange& time_range, int current_hour, int current_minute);
+    bool CheckTimeRange(const TimeRange& time_range, int current_hour, int current_minute, bool is_weekday);
 };
 

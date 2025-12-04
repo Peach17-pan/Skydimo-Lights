@@ -52,7 +52,8 @@ bool RuleEngine::CheckCondition(const Condition& condition, const SystemState& s
         case ConditionType::TIME_RANGE:
             if (condition.time_range.has_value()) {
                 return CheckTimeRange(condition.time_range.value(), 
-                                     state.current_hour, state.current_minute);
+                                     state.current_hour, state.current_minute,
+                                     state.is_weekday);
             }
             return false;
             
@@ -76,12 +77,26 @@ bool RuleEngine::CheckCondition(const Condition& condition, const SystemState& s
             }
             return false;
             
+        case ConditionType::AUDIO_ACTIVITY:
+            if (condition.audio_activity.has_value()) {
+                return state.has_audio_activity == condition.audio_activity.value();
+            }
+            return false;
+            
         default:
             return false;
     }
 }
 
-bool RuleEngine::CheckTimeRange(const TimeRange& time_range, int current_hour, int current_minute) {
+bool RuleEngine::CheckTimeRange(const TimeRange& time_range, int current_hour, int current_minute, bool is_weekday) {
+    // 检查工作日类型限制
+    if (time_range.weekday_type == WeekdayType::WEEKDAY && !is_weekday) {
+        return false;  // 要求工作日，但当前是周末
+    }
+    if (time_range.weekday_type == WeekdayType::WEEKEND && is_weekday) {
+        return false;  // 要求周末，但当前是工作日
+    }
+    
     // 将时间转换为分钟数，便于比较
     int start_minutes = time_range.start_hour * 60 + time_range.start_minute;
     int end_minutes = time_range.end_hour * 60 + time_range.end_minute;
@@ -127,6 +142,8 @@ std::string RuleEngine::GetConditionTypeName(ConditionType type) {
             return "CPU使用率";
         case ConditionType::IDLE_THRESHOLD:
             return "空闲时间";
+        case ConditionType::AUDIO_ACTIVITY:
+            return "音频活动";
         default:
             return "未知";
     }

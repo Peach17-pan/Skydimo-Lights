@@ -14,6 +14,7 @@ add_executable(app_state_monitor
     window_monitor.cpp
     app_classifier.cpp
     rule_engine.cpp
+    audio_monitor.cpp
 )
 
 # 链接Windows库

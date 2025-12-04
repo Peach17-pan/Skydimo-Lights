@@ -41,6 +41,13 @@ public:
      * @return 中文名称
      */
     static std::string GetCategoryName(AppCategory category);
+    
+    /**
+     * 从配置文件重新加载进程名映射
+     * @param config_file_path 配置文件路径，如果为空则使用默认路径
+     * @return 是否成功加载（如果配置文件不存在，返回false但会保留现有映射）
+     */
+    bool LoadConfigFile(const std::string& config_file_path = "app_category_config.txt");
 
 private:
     std::unordered_set<std::string> game_keywords_;
@@ -59,9 +66,23 @@ private:
     void InitializeKeywords();
     
     /**
-     * 初始化进程名映射
+     * 初始化进程名映射（从配置文件或使用默认值）
+     * @param config_file_path 配置文件路径，如果为空或文件不存在，使用默认映射
+     * @return 是否成功加载配置（如果配置文件不存在，返回false但会使用默认值）
      */
-    void InitializeProcessNameMapping();
+    bool InitializeProcessNameMapping(const std::string& config_file_path = "");
+    
+    /**
+     * 从配置文件加载进程名映射
+     * @param config_file_path 配置文件路径
+     * @return 是否成功加载
+     */
+    bool LoadFromConfigFile(const std::string& config_file_path);
+    
+    /**
+     * 初始化默认进程名映射（硬编码的映射关系）
+     */
+    void InitializeDefaultMapping();
     
     /**
      * 检查文本中是否包含关键词集合中的任何关键词

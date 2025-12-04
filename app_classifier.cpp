@@ -1,10 +1,16 @@
 #include "app_classifier.h"
 #include <algorithm>
 #include <cctype>
+#include <fstream>
+#include <sstream>
 
 AppClassifier::AppClassifier() {
     InitializeKeywords();
-    InitializeProcessNameMapping();
+    // 尝试从配置文件加载，如果失败则使用默认映射
+    if (!InitializeProcessNameMapping("app_category_config.txt")) {
+        // 配置文件不存在或加载失败，使用默认映射
+        InitializeDefaultMapping();
+    }
 }
 
 void AppClassifier::InitializeKeywords() {
@@ -63,7 +69,105 @@ void AppClassifier::InitializeKeywords() {
     };
 }
 
-void AppClassifier::InitializeProcessNameMapping() {
+bool AppClassifier::InitializeProcessNameMapping(const std::string& config_file_path) {
+    if (config_file_path.empty()) {
+        return false;
+    }
+    
+    return LoadFromConfigFile(config_file_path);
+}
+
+bool AppClassifier::LoadConfigFile(const std::string& config_file_path) {
+    // 清空现有映射
+    process_name_mapping_.clear();
+    
+    // 尝试从配置文件加载
+    if (LoadFromConfigFile(config_file_path)) {
+        return true;
+    }
+    
+    // 如果加载失败，使用默认映射
+    InitializeDefaultMapping();
+    return false;
+}
+
+bool AppClassifier::LoadFromConfigFile(const std::string& config_file_path) {
+    std::ifstream file(config_file_path);
+    if (!file.is_open()) {
+        return false;
+    }
+    
+    std::string line;
+    int line_number = 0;
+    int loaded_count = 0;
+    
+    while (std::getline(file, line)) {
+        line_number++;
+        
+        // 去除首尾空白字符
+        line.erase(0, line.find_first_not_of(" \t\r\n"));
+        line.erase(line.find_last_not_of(" \t\r\n") + 1);
+        
+        // 跳过空行和注释
+        if (line.empty() || line[0] == '#') {
+            continue;
+        }
+        
+        // 解析格式：进程名=类别名
+        size_t equal_pos = line.find('=');
+        if (equal_pos == std::string::npos) {
+            // 格式错误，跳过这一行
+            continue;
+        }
+        
+        std::string process_name = line.substr(0, equal_pos);
+        std::string category_name = line.substr(equal_pos + 1);
+        
+        // 去除空白字符
+        process_name.erase(0, process_name.find_first_not_of(" \t"));
+        process_name.erase(process_name.find_last_not_of(" \t") + 1);
+        category_name.erase(0, category_name.find_first_not_of(" \t"));
+        category_name.erase(category_name.find_last_not_of(" \t") + 1);
+        
+        if (process_name.empty() || category_name.empty()) {
+            continue;
+        }
+        
+        // 转换为小写
+        process_name = ToLower(process_name);
+        category_name = ToLower(category_name);
+        
+        // 解析类别名
+        AppCategory category;
+        if (category_name == "game") {
+            category = AppCategory::GAME;
+        } else if (category_name == "video") {
+            category = AppCategory::VIDEO;
+        } else if (category_name == "music") {
+            category = AppCategory::MUSIC;
+        } else if (category_name == "document") {
+            category = AppCategory::DOCUMENT;
+        } else if (category_name == "browser") {
+            category = AppCategory::BROWSER;
+        } else if (category_name == "development") {
+            category = AppCategory::DEVELOPMENT;
+        } else if (category_name == "creative") {
+            category = AppCategory::CREATIVE;
+        } else {
+            // 未知类别，跳过
+            continue;
+        }
+        
+        // 添加到映射表
+        process_name_mapping_[process_name] = category;
+        loaded_count++;
+    }
+    
+    file.close();
+    return loaded_count > 0;
+}
+
+void AppClassifier::InitializeDefaultMapping() {
     // 游戏平台
     process_name_mapping_["steam.exe"] = AppCategory::GAME;
     process_name_mapping_["epicgameslauncher.exe"] = AppCategory::GAME;
