@@ -1,0 +1,101 @@
+# 构建目录
+build/
+out/
+bin/
+lib/
+
+# CMake 生成的文件
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+
+# Visual Studio 生成的文件
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.db
+*.opendb
+
+# Visual Studio 编译产物
+*.obj
+*.pdb
+*.ilk
+*.exp
+*.lib
+*.exe
+*.dll
+*.tlog
+*.lastbuildstate
+*.recipe
+*.idb
+*.ipdb
+*.iobj
+*.pch
+
+# Visual Studio 临时文件
+.vs/
+.vscode/
+*.VC.db
+*.VC.VC.opendb
+
+# 编译输出目录
+Debug/
+Release/
+x64/
+Win32/
+[Ll]ogs/
+[Oo]bj/
+[Bb]in/
+[Oo]ut/
+
+# 中间文件
+*.tmp
+*.temp
+*.log
+*.cache
+
+# Python 相关（如果项目中有Python文件）
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# 测试和日志文件
+*.log
+log/
+test_output/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE 配置文件（可选，根据团队需要决定是否忽略）
+# .idea/
+# *.swp
+# *.swo
+# *~
+
+# 配置文件（如果包含敏感信息，可以取消注释）
+# app_category_config.txt
+
+# 临时测试文件
+test_*.txt
+*_test.txt
+*_verify.txt
+
